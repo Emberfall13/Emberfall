@@ -1,0 +1,271 @@
+SUBSYSTEM_DEF(vote)
+	name = "Vote"
+	wait = 10
+	priority = FIRE_PRIORITY_VOTE
+	runlevels = RUNLEVEL_LOBBY | RUNLEVELS_DEFAULT
+	subsystem_flags = SS_KEEP_TIMING | SS_NO_INIT
+
+	//Current vote
+	var/initiator
+	var/started_time
+	var/time_remaining
+	var/duration
+	var/mode
+	var/question
+	/// Options to choose from
+	var/list/choices = list()
+	/// Votes by option
+	var/list/votes_by_choice = list()
+	/// Stores each ckeys vote
+	var/list/current_votes = list()
+	/// Who has voted
+	var/list/voting = list()
+	/// Anonymous votes
+	var/secret = FALSE
+
+/datum/controller/subsystem/vote/fire(resumed)
+	if(mode)
+		time_remaining = round((started_time + duration - world.time)/10)
+		if(mode == VOTE_GAMEMODE && SSticker.current_state >= GAME_STATE_SETTING_UP)
+			to_chat(world, "<b>Gamemode vote aborted: Game has already started.</b>")
+			reset()
+			return
+		if(time_remaining <= 0)
+			result()
+			reset()
+
+/datum/controller/subsystem/vote/proc/autotransfer()
+	// Before doing the vote, see if anyone is playing.
+	// If not, just do the transfer.
+	var/players_are_in_round = FALSE
+	for(var/a in GLOB.player_list) // Mobs with clients attached.
+		var/mob/living/L = a
+		if(!istype(L)) // Exclude ghosts and other weird things.
+			continue
+		if(L.stat == DEAD) // Dead mobs aren't playing.
+			continue
+		// Everything else is, however.
+		players_are_in_round = TRUE
+		break
+
+	if(!players_are_in_round)
+		log_debug(SPAN_DEBUG("The crew transfer shuttle was automatically called at vote time due to no players being present."))
+		init_shift_change(null, 1)
+		return
+
+	initiate_vote(VOTE_CREW_TRANSFER, "the server", 1)
+	subsystem_log("The server has called a crew transfer vote.")
+
+/datum/controller/subsystem/vote/proc/reset()
+	initiator = null
+	started_time = null
+	duration = null
+	time_remaining = null
+	mode = null
+	question = null
+	choices.Cut()
+	votes_by_choice.Cut()
+	current_votes.Cut()
+
+/datum/controller/subsystem/vote/proc/get_result() // Get the highest number of votes
+	var/greatest_votes = 0
+	var/total_votes = 0
+	var/list/winning = list()
+
+	for(var/option in choices)
+		var/votes = votes_by_choice[option]
+		total_votes += votes
+		if(votes <= 0)
+			continue
+		if(votes > greatest_votes)
+			winning = list()
+			LAZYDISTINCTADD(winning, option)
+			greatest_votes = votes
+		else if(votes == greatest_votes)
+			LAZYDISTINCTADD(winning, option)
+	return winning
+	//there used to be code here for giving default votes from non voters, but if you dont vote you dont get to default either
+
+/datum/controller/subsystem/vote/proc/announce_result()
+	var/list/winners = get_result()
+	var/text
+	if(LAZYLEN(winners) > 0)
+		. = pick(winners)
+
+		if(SSticker.hide_mode == 0) // Announce Extended gamemode, but not other gamemodes
+			text += "<b>Vote Result: [.]</b>"
+		else
+			text += "<b>The vote has ended.</b>"
+
+	else
+		text += "<b>Vote Result: Inconclusive - No Votes!</b>"
+	for(var/option in choices)
+		text += SPAN_NOTICE("\n[option] - [votes_by_choice[option] || 0]")
+	log_vote(text)
+	to_chat(world, "<font color='purple'>[text]</font>")
+
+/datum/controller/subsystem/vote/proc/result()
+	. = announce_result()
+	var/restart = 0
+	if(.)
+		switch(mode)
+			if(VOTE_RESTART)
+				if(. == "Restart Round")
+					restart = 1
+			if(VOTE_CREW_TRANSFER)
+				if(. == "Initiate Crew Transfer")
+					init_shift_change(null, 1)
+
+	if(restart)
+		to_chat(world, "World restarting due to vote...")
+		feedback_set_details("end_error", "restart vote")
+		if(blackbox)
+			blackbox.save_all_data_to_sql()
+		sleep(50)
+		log_game("Rebooting due to restart vote")
+		world.Reboot()
+
+/datum/controller/subsystem/vote/proc/submit_vote(ckey, newVote)
+
+	if(mode)
+		if(config_legacy.vote_no_dead && usr.stat == DEAD && !usr.client.holder)
+			return
+		if(newVote)
+			if(current_votes[ckey])
+				votes_by_choice[current_votes[ckey]]--
+			current_votes[ckey] = choices[newVote]
+			votes_by_choice[choices[newVote]]++
+		else
+			votes_by_choice[current_votes[ckey]]--
+			current_votes[ckey] = null
+
+/datum/controller/subsystem/vote/proc/initiate_vote(vote_type, initiator_key, automatic = FALSE, time = config_legacy.vote_period)
+	if(!mode)
+		if(started_time != null && !(check_rights(R_ADMIN) || automatic))
+			var/next_allowed_time = (started_time + config_legacy.vote_delay)
+			if(next_allowed_time > world.time)
+				return 0
+
+		reset()
+
+		switch(vote_type)
+			if(VOTE_RESTART)
+				choices.Add("Restart Round", "Continue Playing")
+				votes_by_choice["Restart Round"] = 0
+				votes_by_choice["Continue Playing"] = 0
+			if(VOTE_CREW_TRANSFER)
+				question = "Your PDA beeps with a message from Central. Would you like an additional hour to finish ongoing projects?"
+				choices.Add("Initiate Crew Transfer", "Extend the Shift")
+				votes_by_choice["Initiate Crew Transfer"] = 0
+				votes_by_choice["Extend the Shift"] = 0
+			if(VOTE_CUSTOM)
+				question = sanitizeSafe(input(usr, "What is the vote for?") as text|null)
+				if(!question)
+					return 0
+				var/list/temp = list()
+				for(var/i = 1 to 10)
+					var/option = capitalize(sanitize(input(usr, "Please enter an option or hit cancel to finish") as text|null))
+					if(!option || mode || !usr.client)
+						break
+					temp.Add(option)
+					votes_by_choice[temp] = 0
+				choices = temp
+			else
+				return 0
+
+		mode = vote_type
+		initiator = initiator_key
+		started_time = world.time
+		duration = time
+		var/text = "[capitalize(mode)] vote started by [initiator]."
+		if(mode == VOTE_CUSTOM)
+			text += "\n[question]"
+
+		log_vote(text)
+
+		to_chat(world, "<span class='infoplain'><font color='purple'><b>[text]</b>\nType <b>vote</b> or click <a href='?src=\ref[src]'>here</a> to place your votes.\nYou have [config_legacy.vote_period / 10] seconds to vote.</font>")
+		if(vote_type == VOTE_CREW_TRANSFER || vote_type == VOTE_GAMEMODE || vote_type == VOTE_CUSTOM)
+			SEND_SOUND(world, sound('sound/ambience/alarm4.ogg', repeat = 0, wait = 0, volume = 50, channel = 3))
+
+		time_remaining = round(config_legacy.vote_period / 10)
+		return 1
+	return 0
+
+/datum/controller/subsystem/vote/Topic(href, href_list[])
+	usr.client.vote()
+
+/client/verb/vote()
+	set category = "OOC"
+	set name = "Vote"
+
+	if(SSvote)
+		SSvote.ui_interact(usr)
+
+
+/datum/controller/subsystem/vote/ui_state()
+	return GLOB.always_state
+
+/datum/controller/subsystem/vote/ui_interact(mob/user, datum/tgui/ui)
+	// Tracks who is voting
+	if(!(user.client?.ckey in voting))
+		voting += user.client?.ckey
+		current_votes[user.client?.ckey] = null
+	ui = SStgui.try_update_ui(user, src, ui)
+	if(!ui)
+		ui = new(user, src, "Vote")
+		ui.open()
+
+/datum/controller/subsystem/vote/ui_data(mob/user)
+	var/list/data = list(
+		"choices" = list(),
+		"question" = question,
+		"selected_choice" = LAZYACCESS(current_votes,user.key) ? LAZYACCESS(current_votes,user.key) : "",
+		"time_remaining" = time_remaining,
+		"admin" = check_rights_for(user.client, R_ADMIN),
+
+		"vote_happening" = !!choices.len,
+		"secret" = secret,
+	)
+
+	for(var/key in choices)
+		data["choices"] += list(list(
+			"name" = key,
+			"votes" = votes_by_choice[key] || 0
+		))
+
+	return data
+
+/datum/controller/subsystem/vote/ui_act(action, params)
+	. = ..()
+	if(.)
+		return
+
+	var/admin = FALSE
+	var/client/C = usr.client
+	if(C.holder)
+		if(C.holder.rights & R_ADMIN)
+			admin = TRUE
+
+	switch(action)
+		if("cancel")
+			if(admin)
+				log_and_message_admins("[key_name_admin(usr)] has cancelled the current vote.")
+				reset()
+		if("restart")
+			if(admin || config_legacy.allow_vote_restart)
+				initiate_vote(VOTE_RESTART, usr.key)
+		if("transfer")
+			if(config_legacy.allow_vote_restart || usr.client.holder)
+				initiate_vote(VOTE_CREW_TRANSFER, usr.key)
+		if("custom")
+			if(admin)
+				initiate_vote(VOTE_CUSTOM, usr.key)
+		if("vote")
+			//current_votes[usr.client.ckey] = round(text2num(params["index"]))
+			submit_vote(usr.key,params["index"])
+		if("unvote")
+			submit_vote(usr.key, null)
+		if("hide")
+			secret = !secret
+			log_and_message_admins("[usr] made the individual vote numbers [(secret ? "invisibile" : "visible")].")
+	return TRUE

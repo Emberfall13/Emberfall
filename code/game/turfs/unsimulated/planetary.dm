@@ -1,0 +1,91 @@
+// This is a wall you surround the area of your "planet" with, that makes the atmosphere inside stay within bounds, even if canisters
+// are opened or other strange things occur.
+/turf/unsimulated/wall/planetary
+	name = "railroading"
+	desc = "Choo choo!"
+	icon = 'icons/turf/walls.dmi'
+	icon_state = "riveted"
+	opacity = 1
+	density = 1
+	alpha = 0
+	blocks_air = 0
+	// Set these to get your desired planetary atmosphere.
+	initial_gas_mix = GAS_STRING_STP
+
+/turf/unsimulated/wall/planetary/Initialize(mapload)
+	. = ..()
+	SSplanets.addWall(src)
+
+/turf/unsimulated/wall/planetary/Destroy()
+	SSplanets.removeWall(src)
+	return ..()
+
+/turf/unsimulated/wall/planetary/proc/set_temperature(var/new_temperature)
+	if(new_temperature == temperature)
+		return
+	temperature = new_temperature
+	// Force ZAS to reconsider our connections because our temperature has changed
+	if(connections)
+		connections.erase_all()
+	queue_zone_update()
+
+// Normal station/earth air.
+/turf/unsimulated/wall/planetary/normal
+	initial_gas_mix = GAS_STRING_STP
+
+/turf/unsimulated/wall/planetary/firnir
+	initial_gas_mix = GAS_STRING_FIRNIR
+
+/turf/unsimulated/wall/planetary/tyr
+	initial_gas_mix = GAS_STRING_TYR
+
+// Wiki says it's 92.6 kPa, composition 18.1% O2 80.8% N2 1.1% trace.  We're gonna pretend trace is actually nitrogen.
+/turf/unsimulated/wall/planetary/sif
+	initial_gas_mix = GAS_STRING_SIF
+
+//High Alt Sif
+/turf/unsimulated/wall/planetary/sif/alt
+	initial_gas_mix = GAS_STRING_SIF_ALT
+
+// Fairly close to Mars in terms of temperature and pressure.
+/turf/unsimulated/wall/planetary/magni
+	initial_gas_mix = GAS_STRING_MAGNI
+
+/turf/unsimulated/wall/planetary/desert
+	name = "Endless Sands"
+	desc = "You see nothing but featureless flat desert stretching outwards far beyond what the eye can see."
+	icon_state = "desert"
+	opacity = 0
+	density = 1
+	alpha = 0
+	blocks_air = 0
+	initial_gas_mix = GAS_STRING_STP_HOT
+
+/turf/unsimulated/wall/planetary/desert/standard_temp
+	icon = 'icons/turf/outdoors.dmi'
+	icon_state = "lowdesert"
+	initial_gas_mix = GAS_STRING_STP
+
+/turf/unsimulated/wall/planetary/virgo3b
+	name = "facility wall"
+	desc = "An eight-meter tall carbyne wall. For when the wildlife on your planet is mostly militant megacorps."
+	alpha = 0xFF
+	initial_gas_mix = ATMOSPHERE_ID_VIRGO3B
+
+/turf/unsimulated/wall/planetary/triumph
+	name = "facility wall"
+	desc = "An eight-meter tall carbyne wall. For when the wildlife on your planet is mostly militant megacorps."
+	alpha = 0xFF
+	TRIUMPH_SET_ATMOS
+
+/turf/unsimulated/wall/planetary/lythios43c
+	name = "glacial permafrost"
+	desc = "An eight-meter tall carbyne wall. For when the wildlife on your planet is mostly militant megacorps."
+	alpha = 0xFF
+	initial_gas_mix = ATMOSPHERE_ID_LYTHIOS43C
+	icon = 'icons/turf/walls/natural.dmi'
+	base_icon_state = "wall"
+	smoothing_flags = SMOOTH_BITMASK
+	smoothing_groups = (SMOOTH_GROUP_WALLS+SMOOTH_GROUP_CLOSED_TURFS + SMOOTH_GROUP_MINERAL_WALLS)
+	canSmoothWith = (SMOOTH_GROUP_WALLS + SMOOTH_GROUP_CLOSED_TURFS+SMOOTH_GROUP_MINERAL_WALLS)
+	color = COLOR_OFF_WHITE

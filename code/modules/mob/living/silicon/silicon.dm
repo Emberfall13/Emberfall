@@ -1,0 +1,435 @@
+/datum/category_item/catalogue/fauna/silicon
+	name = "Silicons"
+	desc = "Silicon based life, in all its myriad forms, began as a \
+	tool of some kind. This history has lead to a disconnect between \
+	synthetic and organic life which varies in severity across cultures."
+	value = CATALOGUER_REWARD_TRIVIAL
+	unlocked_by_any = list(/datum/category_item/catalogue/fauna/silicon)
+
+// Obtained by scanning all X.
+/datum/category_item/catalogue/fauna/all_silicons
+	name = "Collection - Silicons"
+	desc = "You have scanned a large array of different types of Silicons, \
+	and therefore you have been granted a fair sum of points, through this \
+	entry."
+	value = CATALOGUER_REWARD_MEDIUM
+	unlocked_by_all = list(
+		/datum/category_item/catalogue/fauna/silicon/ai,
+		/datum/category_item/catalogue/fauna/silicon/pai,
+		/datum/category_item/catalogue/fauna/silicon/robot
+		)
+
+/mob/living/silicon
+	gender = NEUTER
+	voice_name = "synthesized voice"
+	silicon_privileges = PRIVILEGES_SILICON
+	rad_flags = RAD_BLOCK_CONTENTS
+	var/syndicate = 0
+	var/const/MAIN_CHANNEL = "Main Frequency"
+	var/lawchannel = MAIN_CHANNEL // Default channel on which to state laws
+	var/list/stating_laws = list()// Channels laws are currently being stated on
+	var/obj/item/radio/common_radio
+
+	var/list/speech_synthesizer_langs = list()	//which languages can be vocalized by the speech synthesizer
+
+	//Used in say.dm.
+	var/speak_statement = "states"
+	var/speak_exclamation = "declares"
+	var/speak_query = "queries"
+	var/pose //Yes, now AIs can pose too.
+	var/obj/item/camera/siliconcam/aiCamera = null //photography
+	var/local_transmit //If set, can only speak to others of the same type within a short range.
+
+	var/next_alarm_notice
+	var/list/datum/alarm/queued_alarms = new()
+
+	var/list/access_rights
+	var/obj/item/card/id/idcard
+	var/idcard_type = /obj/item/card/id/synthetic
+
+	var/hudmode = null
+
+	/// our translation context
+	var/datum/translation_context/translation_context
+	/// default translation context type
+	var/translation_context_type = /datum/translation_context/simple/silicons
+
+/mob/living/silicon/Initialize(mapload)
+	silicon_mob_list |= src
+	. = ..()
+	add_language(LANGUAGE_GALCOM)
+	set_default_language(SScharacters.resolve_language_name(LANGUAGE_GALCOM))
+	create_translation_context()
+	init_id()
+	init_subsystems()
+
+	for(var/datum/language/L as anything in SScharacters.all_languages())
+		if(L.translation_class & TRANSLATION_CLASS_LEVEL_1)
+			add_language(L)
+	add_language(LANGUAGE_EAL)
+
+/mob/living/silicon/Destroy()
+	silicon_mob_list -= src
+	for(var/datum/alarm_handler/AH in SSalarms.all_handlers)
+		AH.unregister_alarm(src)
+	return ..()
+
+/mob/living/silicon/proc/init_id()
+	if(idcard)
+		return
+	idcard = new idcard_type(src)
+	set_id_info(idcard)
+
+/mob/living/silicon/proc/SetName(pickedName = "Alice")
+	real_name = pickedName
+	name = real_name
+
+/mob/living/silicon/proc/show_laws()
+	return
+
+/mob/living/silicon/PhysicalLife(seconds, times_fired)
+	if((. = ..()))
+		return
+	handle_modifiers()
+	handle_light()
+	handle_regular_hud_updates()
+	handle_vision()
+
+/mob/living/silicon/handle_regular_hud_updates()
+	. = ..()
+	SetSeeInvisibleSelf(SEE_INVISIBLE_LIVING)
+	SetSightSelf(SIGHT_FLAGS_DEFAULT)
+	if(bodytemp)
+		switch(src.bodytemperature) //310.055 optimal body temp
+			if(335 to INFINITY)
+				src.bodytemp.icon_state = "temp2"
+			if(320 to 335)
+				src.bodytemp.icon_state = "temp1"
+			if(300 to 320)
+				src.bodytemp.icon_state = "temp0"
+			if(260 to 300)
+				src.bodytemp.icon_state = "temp-1"
+			else
+				src.bodytemp.icon_state = "temp-2"
+
+/mob/living/silicon/emp_act(severity)
+	switch(severity)
+		if(1)
+			src.take_organ_damage(0,20,emp=1)
+			Confuse(5)
+		if(2)
+			src.take_organ_damage(0,15,emp=1)
+			Confuse(4)
+		if(3)
+			src.take_organ_damage(0,10,emp=1)
+			Confuse(3)
+		if(4)
+			src.take_organ_damage(0,5,emp=1)
+			Confuse(2)
+	flash_eyes(affect_silicon = 1)
+	to_chat(src, "<span class='danger'><B>*BZZZT*</B></span>")
+	to_chat(src, "<span class='danger'>Warning: Electromagnetic pulse detected.</span>")
+	..()
+
+/mob/living/silicon/stun_effect_act(var/stun_amount, var/agony_amount, var/def_zone, var/used_weapon=null)
+	return	//immune
+
+/mob/living/silicon/electrocute_act(var/shock_damage, var/obj/source, var/siemens_coeff = 1.0, var/def_zone = null, var/stun = 1)
+	if(shock_damage > 0)
+		var/datum/effect_system/spark_spread/s = new /datum/effect_system/spark_spread
+		s.set_up(5, 1, loc)
+		s.start()
+
+		shock_damage *= siemens_coeff	//take reduced damage
+		take_overall_damage(0, shock_damage)
+		visible_message("<span class='warning'>[src] was shocked by \the [source]!</span>", \
+			"<span class='danger'>Energy pulse detected, system damaged!</span>", \
+			"<span class='warning'>You hear an electrical crack.</span>")
+		if(prob(20))
+			afflict_stun(20 * 2)
+		return
+
+/mob/living/silicon/proc/damage_mob(var/brute = 0, var/fire = 0, var/tox = 0)
+	return
+
+/mob/living/silicon/IsAdvancedToolUser()
+	return 1
+
+/mob/living/silicon/bullet_act(var/obj/projectile/Proj)
+
+	if(!Proj.nodamage)
+		switch(Proj.damage_type)
+			if(BRUTE)
+				adjustBruteLoss(Proj.get_final_damage(src))
+			if(BURN)
+				adjustFireLoss(Proj.get_final_damage(src))
+
+	Proj.on_hit(src,2)
+	update_health()
+	return 2
+
+/mob/living/silicon/apply_effect(var/effect = 0,var/effecttype = STUN, var/blocked = 0, var/check_protection = 1)
+	return 0//The only effect that can hit them atm is flashes and they still directly edit so this works for now
+
+/proc/islinked(var/mob/living/silicon/robot/bot, var/mob/living/silicon/ai/ai)
+	if(!istype(bot) || !istype(ai))
+		return 0
+	if (bot.connected_ai == ai)
+		return 1
+	return 0
+
+// this function shows the health of the AI in the Status panel
+/mob/living/silicon/proc/show_system_integrity()
+	. = list()
+	if(!src.stat)
+		STATPANEL_DATA_LINE("System integrity: [round((health/getMaxHealth())*100)]%")
+	else
+		STATPANEL_DATA_LINE("Systems nonfunctional")
+
+// This is a pure virtual function, it should be overwritten by all subclasses
+/mob/living/silicon/proc/show_malf_ai()
+	return list()
+
+// This adds the basic clock, shuttle recall timer, and malf_ai info to all silicon lifeforms
+/mob/living/silicon/statpanel_data(client/C)
+	. = ..()
+	if(C.statpanel_tab("Status"))
+		STATPANEL_DATA_LINE("")
+		. += show_system_integrity()
+		. += show_malf_ai()
+
+// this function displays the stations manifest in a separate window
+/mob/living/silicon/proc/show_station_manifest()
+	var/dat = "<div align='center'>"
+	if(!data_core)
+		to_chat(src,"<span class='notice'>There is no data to form a manifest with. Contact your Nanotrasen administrator.</span>")
+		return
+	dat += data_core.get_manifest(1) //The 1 makes it monochrome.
+
+	var/datum/browser/popup = new(src, "Crew Manifest", "Crew Manifest", 370, 420, src)
+	popup.set_content(dat)
+	popup.open()
+
+//can't inject synths
+/mob/living/silicon/can_inject(var/mob/user, var/error_msg, var/target_zone, var/ignore_thickness = FALSE)
+	if(error_msg)
+		to_chat(user, "<span class='alert'>The armoured plating is too tough.</span>")
+	return 0
+
+//Silicon mob language procs
+
+/mob/living/silicon/can_speak(datum/language/speaking)
+	return universal_speak || (speaking in src.speech_synthesizer_langs) || (speaking.name == "Noise")	//need speech synthesizer support to vocalize a language
+
+/mob/living/silicon/add_language(var/language, var/can_speak=1)
+	var/datum/language/added_language = SScharacters.resolve_language_name(language)
+	if(!added_language)
+		return
+
+	. = ..(language)
+	if (can_speak && (added_language in languages) && !(added_language in speech_synthesizer_langs))
+		speech_synthesizer_langs += added_language
+		return 1
+
+/mob/living/silicon/remove_language(var/rem_language)
+	var/datum/language/removed_language = SScharacters.resolve_language_name(rem_language)
+	if(!removed_language)
+		return
+
+	..(rem_language)
+	speech_synthesizer_langs -= removed_language
+
+/mob/living/silicon/check_languages()
+	set name = "Check Known Languages"
+	set category = "IC"
+	set src = usr
+
+	var/dat = "<b><font size = 5>Known Languages</font></b><br/><br/>"
+
+	if(default_language)
+		dat += "Current default language: [default_language] - <a href='byond://?src=\ref[src];default_lang=reset'>reset</a><br/><br/>"
+
+	for(var/datum/language/L in languages)
+		if(!(L.language_flags & LANGUAGE_NONGLOBAL))
+			var/default_str
+			if(L == default_language)
+				default_str = " - default - <a href='byond://?src=\ref[src];default_lang=reset'>reset</a>"
+			else
+				default_str = " - <a href='byond://?src=\ref[src];default_lang=\ref[L]'>set default</a>"
+
+			var/synth = (L in speech_synthesizer_langs)
+			dat += "<b>[L.name] ([get_language_prefix()][L.key])</b>[synth ? default_str : null]<br/>Speech Synthesizer: <i>[synth ? "YES" : "NOT SUPPORTED"]</i><br/>[L.desc]<br/><br/>"
+
+	src << browse(dat, "window=checklanguage")
+	return
+
+/mob/living/silicon/proc/toggle_sensor_mode()
+	var/sensor_type = input("Please select sensor type.", "Sensor Integration", null) as null|anything in list("Security","Medical","Disable")
+	if(isnull(sensor_type))
+		return
+	switch(hudmode)
+		if("Security")
+			get_atom_hud(DATA_HUD_SECURITY_ADVANCED).remove_hud_from(src)
+		if("Medical")
+			get_atom_hud(DATA_HUD_MEDICAL).remove_hud_from(src)
+	switch(sensor_type)
+		if ("Security")
+			get_atom_hud(DATA_HUD_SECURITY_ADVANCED).add_hud_to(src)
+			to_chat(src,"<span class='notice'>Security records overlay enabled.</span>")
+		if ("Medical")
+			get_atom_hud(DATA_HUD_MEDICAL).add_hud_to(src)
+			to_chat(src,"<span class='notice'>Life signs monitor overlay enabled.</span>")
+		if ("Disable")
+			to_chat(src,"Sensor augmentations disabled.")
+
+	hudmode = sensor_type //This is checked in examine.dm on humans, so they can see medical/security records depending on mode
+
+/mob/living/silicon/verb/pose()
+	set name = "Set Pose"
+	set desc = "Sets a description which will be shown when someone examines you."
+	set category = "IC"
+
+	pose =  sanitize(input(usr, "This is [src]. It is...", "Pose", null)  as text)
+
+	visible_emote("adjusts its posture.")
+
+/mob/living/silicon/verb/set_flavor()
+	set name = "Set Flavour Text"
+	set desc = "Sets an extended description of your character's features."
+	set category = "IC"
+
+	flavor_text =  sanitize(input(usr, "Please enter your new flavour text.", "Flavour text", null)  as text)
+
+/mob/living/silicon/binarycheck()
+	return 1
+
+/mob/living/silicon/legacy_ex_act(severity)
+	if(!blinded)
+		flash_eyes()
+
+	switch(severity)
+		if(1.0)
+			if (stat != 2)
+				adjustBruteLoss(100)
+				adjustFireLoss(100)
+				if(!anchored)
+					gib()
+		if(2.0)
+			if (stat != 2)
+				adjustBruteLoss(60)
+				adjustFireLoss(60)
+		if(3.0)
+			if (stat != 2)
+				adjustBruteLoss(30)
+
+	update_health()
+
+/mob/living/silicon/proc/receive_alarm(var/datum/alarm_handler/alarm_handler, var/datum/alarm/alarm, was_raised)
+	if(!next_alarm_notice)
+		next_alarm_notice = world.time + SecondsToTicks(10)
+	if(alarm.hidden)
+		return
+
+	var/list/alarms = queued_alarms[alarm_handler]
+	if(was_raised)
+		// Raised alarms are always set
+		alarms[alarm] = 1
+	else
+		// Alarms that were raised but then cleared before the next notice are instead removed
+		if(alarm in alarms)
+			alarms -= alarm
+		// And alarms that have only been cleared thus far are set as such
+		else
+			alarms[alarm] = -1
+
+/mob/living/silicon/proc/process_queued_alarms()
+	if(next_alarm_notice && (world.time > next_alarm_notice))
+		next_alarm_notice = 0
+
+		var/alarm_raised = 0
+		for(var/datum/alarm_handler/AH in queued_alarms)
+			var/list/alarms = queued_alarms[AH]
+			var/reported = 0
+			for(var/datum/alarm/A in alarms)
+				if(alarms[A] == 1)
+					alarm_raised = 1
+					if(!reported)
+						reported = 1
+						to_chat(src, "<span class='warning'>--- [AH.category] Detected ---</span>")
+					raised_alarm(A)
+
+		for(var/datum/alarm_handler/AH in queued_alarms)
+			var/list/alarms = queued_alarms[AH]
+			var/reported = 0
+			for(var/datum/alarm/A in alarms)
+				if(alarms[A] == -1)
+					if(!reported)
+						reported = 1
+						to_chat(src, "<span class='notice'>--- [AH.category] Cleared ---</span>")
+					to_chat(src, "\The [A.alarm_name()].")
+
+		if(alarm_raised)
+			to_chat(src, "<A HREF=?src=\ref[src];showalerts=1>\[Show Alerts\]</A>")
+
+		for(var/datum/alarm_handler/AH in queued_alarms)
+			var/list/alarms = queued_alarms[AH]
+			alarms.Cut()
+
+/mob/living/silicon/proc/raised_alarm(var/datum/alarm/A)
+	to_chat(src, "[A.alarm_name()]!")
+
+/mob/living/silicon/ai/raised_alarm(var/datum/alarm/A)
+	var/cameratext = ""
+	for(var/obj/machinery/camera/C in A.cameras())
+		cameratext += "[(cameratext == "")? "" : "|"]<A HREF=?src=\ref[src];switchcamera=\ref[C]>[C.c_tag]</A>"
+	to_chat(src, "[A.alarm_name()]! ([(cameratext)? cameratext : "No Camera"])")
+
+
+/mob/living/silicon/proc/is_traitor()
+	return mind && (mind in traitors.current_antagonists)
+
+/mob/living/silicon/proc/is_malf()
+	return mind && (mind in malf.current_antagonists)
+
+/mob/living/silicon/proc/is_malf_or_traitor()
+	return is_traitor() || is_malf()
+
+/mob/living/silicon/adjustEarDamage()
+	return
+
+/mob/living/silicon/setEarDamage()
+	return
+
+/mob/living/silicon/flash_eyes(intensity = FLASH_PROTECTION_MODERATE, override_blindness_check = FALSE, affect_silicon = FALSE, visual = FALSE, type = /atom/movable/screen/fullscreen/tiled/flash)
+	if(affect_silicon)
+		return ..()
+
+/mob/living/silicon/proc/clear_client()
+	//Handle job slot/tater cleanup.
+	var/job = mind.assigned_role
+
+	SSjob.FreeRole(job)
+
+	if(mind.objectives.len)
+		qdel(mind.objectives)
+		mind.special_role = null
+
+	clear_antag_roles(mind)
+
+	ghostize(0)
+	qdel(src)
+
+/mob/living/silicon/has_vision()
+	return 0 //NOT REAL EYES
+
+/mob/living/silicon/get_bullet_impact_effect_type(var/def_zone)
+	return BULLET_IMPACT_METAL
+
+//! Topic
+/mob/living/silicon/Topic(href, href_list)
+	. = ..()
+	if(.)
+		return
+	if(href_list["ooc_notes"])
+		src.Examine_OOC()
+		return TRUE
