@@ -144,6 +144,9 @@
 /area/engineering/engine_core)
 "aw" = (
 /obj/effect/floor_decal/rust,
+/obj/effect/floor_decal/industrial/warning{
+	dir = 8
+	},
 /turf/simulated/floor/plating/lythios43c{
 	outdoors = 0
 	},
@@ -847,8 +850,7 @@
 /area/maintenance/lower/atmos)
 "cO" = (
 /obj/structure/window/reinforced{
-	dir = 8;
-	health = 1e+006
+	dir = 8
 	},
 /obj/structure/closet/radiation,
 /obj/item/clothing/glasses/meson,
@@ -2184,10 +2186,10 @@
 /area/rnd/secure_storage/critical)
 "gS" = (
 /obj/structure/table/reinforced,
-/obj/item/book/manual/supermatter_engine,
 /obj/machinery/atmospherics/component/unary/vent_pump/on{
 	dir = 4
 	},
+/obj/machinery/computer/skills,
 /turf/simulated/floor/carpet/oracarpet,
 /area/crew_quarters/heads/chief)
 "gT" = (
@@ -3766,9 +3768,6 @@
 /obj/machinery/camera/network/engineering{
 	dir = 4
 	},
-/obj/machinery/computer/card{
-	dir = 4
-	},
 /turf/simulated/floor/tiled,
 /area/crew_quarters/heads/chief)
 "lE" = (
@@ -3951,8 +3950,7 @@
 /obj/item/clothing/glasses/meson,
 /obj/item/clothing/glasses/meson,
 /obj/structure/window/reinforced{
-	dir = 8;
-	health = 1e+006
+	dir = 8
 	},
 /turf/simulated/floor,
 /area/engineering/engine_gas)
@@ -6905,8 +6903,7 @@
 "vP" = (
 /obj/effect/floor_decal/industrial/outline/yellow,
 /obj/structure/window/reinforced{
-	dir = 8;
-	health = 1e+006
+	dir = 8
 	},
 /obj/machinery/shield_gen/external,
 /turf/simulated/floor/plating,
@@ -7810,12 +7807,6 @@
 /obj/machinery/door/firedoor/glass,
 /turf/simulated/floor/tiled/techfloor,
 /area/rnd/secure_storage/critical/vault2)
-"yT" = (
-/obj/effect/map_effect/portal/line/side_a{
-	dir = 4
-	},
-/turf/simulated/floor/sky/depths/lythios43c,
-/area/rift/surfacebase/underground/under2)
 "yU" = (
 /obj/effect/floor_decal/borderfloor{
 	dir = 1
@@ -7841,22 +7832,21 @@
 "yZ" = (
 /obj/machinery/button/remote/driver{
 	id = "enginecore";
-	name = "Emergency Core Eject";
+	name = "Second Stage Engine Ejection - Core Ejection";
 	pixel_y = -21
 	},
 /obj/machinery/button/remote/blast_door{
 	desc = "A remote control-switch for the engine core's emergency ejection vent.";
 	dir = 1;
 	id = "EngineVent";
-	name = "Emergency Engine Ejection Vent";
+	name = "First Stage Engine Ejection - Blast Doors";
 	pixel_y = -32
 	},
 /obj/structure/window/basic{
 	dir = 1
 	},
 /obj/structure/window/reinforced{
-	dir = 8;
-	health = 1e+006
+	dir = 8
 	},
 /turf/simulated/floor/tiled,
 /area/crew_quarters/heads/chief)
@@ -10658,8 +10648,7 @@
 /area/quartermaster/belterdock/refinery)
 "Ke" = (
 /obj/structure/window/reinforced{
-	dir = 8;
-	health = 1e+006
+	dir = 8
 	},
 /obj/structure/window/reinforced{
 	dir = 1
@@ -10963,14 +10952,6 @@
 "Le" = (
 /turf/simulated/floor/tiled/white,
 /area/rnd/secure_storage/lower)
-"Lg" = (
-/obj/effect/map_effect/portal/master/side_a{
-	dir = 4;
-	name = "center_to_westdeep";
-	portal_id = "westdeepstep"
-	},
-/turf/simulated/floor/sky/depths/lythios43c,
-/area/rift/surfacebase/underground/under2)
 "Li" = (
 /obj/structure/cable/cyan{
 	icon_state = "1-4"
@@ -11569,6 +11550,10 @@
 /obj/machinery/requests_console/preset/ce{
 	pixel_y = -30
 	},
+/obj/machinery/mass_driver{
+	dir = 8;
+	id = "enginecore"
+	},
 /turf/simulated/floor/tiled,
 /area/crew_quarters/heads/chief)
 "Nm" = (
@@ -11985,8 +11970,7 @@
 /area/engineering/locker_room)
 "Oz" = (
 /obj/structure/window/reinforced{
-	dir = 8;
-	health = 1e+006
+	dir = 8
 	},
 /obj/machinery/computer/security/engineering{
 	dir = 4
@@ -12715,7 +12699,7 @@
 /turf/simulated/floor/tiled/steel_grid,
 /area/engineering/engineering_monitoring)
 "Rv" = (
-/obj/structure/closet/crate/nanotrasen,
+/obj/structure/closet/crate/corporate/nanotrasen,
 /turf/simulated/floor/reinforced,
 /area/rnd/secure_storage/lower)
 "Ry" = (
@@ -12809,8 +12793,7 @@
 /area/engineering/engine_eva)
 "RR" = (
 /obj/structure/window/reinforced{
-	dir = 8;
-	health = 1e+006
+	dir = 8
 	},
 /obj/structure/window/reinforced,
 /obj/machinery/computer/station_alert{
@@ -13443,15 +13426,14 @@
 /turf/simulated/floor/carpet/bcarpet,
 /area/chapel/main)
 "TY" = (
-/obj/machinery/computer/skills{
-	dir = 4
-	},
-/obj/structure/table/reinforced,
 /obj/machinery/light{
 	dir = 8
 	},
 /obj/machinery/light_switch{
 	pixel_x = -21
+	},
+/obj/machinery/computer/card{
+	dir = 4
 	},
 /turf/simulated/floor/tiled,
 /area/crew_quarters/heads/chief)
@@ -14997,192 +14979,192 @@
 
 (1,1,1) = {"
 AW
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-yT
-Lg
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
+WA
 aa
 aa
 aa
