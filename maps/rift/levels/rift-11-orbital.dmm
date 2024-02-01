@@ -306,8 +306,8 @@
 /area/holodeck/source_courtroom)
 "bf" = (
 /obj/machinery/door/window/holowindoor{
-	dir = 4;
-	name = "Red Team"
+	name = "Red Team";
+	dir = 4
 	},
 /turf/simulated/floor/holofloor/tiled/dark,
 /area/holodeck/source_emptycourt)
@@ -767,8 +767,8 @@
 "cB" = (
 /obj/machinery/door/window/holowindoor{
 	base_state = "right";
-	dir = 4;
-	icon_state = "right"
+	icon_state = "right";
+	dir = 4
 	},
 /turf/simulated/floor/holofloor/tiled,
 /area/holodeck/source_courtroom)
@@ -789,7 +789,8 @@
 	base_state = "right";
 	dir = 4;
 	icon_state = "right";
-	name = "Green Team"
+	name = "Green Team";
+	dir = 4
 	},
 /turf/simulated/floor/holofloor/tiled/dark,
 /area/holodeck/source_emptycourt)
@@ -1256,8 +1257,8 @@
 /area/holodeck/source_meetinghall)
 "eg" = (
 /obj/machinery/door/window/holowindoor{
-	dir = 4;
-	name = "Red Team"
+	name = "Red Team";
+	dir = 4
 	},
 /turf/simulated/floor/holofloor/tiled/dark,
 /area/holodeck/source_basketball)
@@ -1272,8 +1273,8 @@
 /area/holodeck/source_beach)
 "ej" = (
 /obj/machinery/door/window/holowindoor{
-	dir = 4;
-	name = "Red Team"
+	name = "Red Team";
+	dir = 4
 	},
 /turf/simulated/floor/holofloor/tiled/dark,
 /area/holodeck/source_thunderdomecourt)
@@ -1882,7 +1883,8 @@
 	base_state = "right";
 	dir = 4;
 	icon_state = "right";
-	name = "Green Team"
+	name = "Green Team";
+	dir = 4
 	},
 /turf/simulated/floor/holofloor/tiled/dark,
 /area/holodeck/source_basketball)
@@ -1902,7 +1904,8 @@
 	base_state = "right";
 	dir = 4;
 	icon_state = "right";
-	name = "Green Team"
+	name = "Green Team";
+	dir = 4
 	},
 /turf/simulated/floor/holofloor/tiled/dark,
 /area/holodeck/source_thunderdomecourt)
@@ -5397,7 +5400,7 @@
 /obj/machinery/door/airlock/multi_tile/glass{
 	req_access = list(5)
 	},
-/obj/machinery/door/firedoor/multi_tile,
+/obj/machinery/door/firedoor/glass,
 /turf/simulated/floor/tiled/white,
 /area/centcom/simulated/medical)
 "qn" = (
@@ -6195,7 +6198,7 @@
 /area/centcom/simulated/medical)
 "sV" = (
 /obj/structure/cable/green,
-/obj/machinery/power/apc/alarms_hidden/east_bump,
+/obj/machinery/power/apc/alarms_hidden/east_mount,
 /obj/machinery/atmospherics/pipe/simple/hidden{
 	dir = 9
 	},
@@ -8413,7 +8416,7 @@
 	pixel_y = -28
 	},
 /obj/structure/cable/green,
-/obj/machinery/power/apc/alarms_hidden/west_bump,
+/obj/machinery/power/apc/alarms_hidden/west_mount,
 /turf/simulated/floor/tiled/dark,
 /area/shuttle/specops/cockpit)
 "KE" = (
@@ -8850,6 +8853,10 @@
 /obj/structure/table/reinforced,
 /turf/unsimulated/floor/dark,
 /area/centcom/specops)
+"OM" = (
+/obj/machinery/door/firedoor/glass,
+/turf/simulated/floor/tiled/white,
+/area/centcom/simulated/medical)
 "OY" = (
 /obj/structure/bed/chair/backed_grey,
 /turf/simulated/floor/reinforced,
@@ -8974,7 +8981,7 @@
 /obj/structure/cable/green{
 	icon_state = "0-8"
 	},
-/obj/machinery/power/apc/alarms_hidden/east_bump,
+/obj/machinery/power/apc/alarms_hidden/east_mount,
 /turf/simulated/floor/tiled/dark,
 /area/shuttle/specops/general)
 "QJ" = (
@@ -9538,7 +9545,7 @@
 /obj/structure/cable{
 	icon_state = "0-8"
 	},
-/obj/machinery/power/apc/alarms_hidden/east_bump,
+/obj/machinery/power/apc/alarms_hidden/east_mount,
 /turf/simulated/floor/plating,
 /area/centcom/specops)
 "Wt" = (
@@ -9853,7 +9860,7 @@
 	icon_state = "1-8"
 	},
 /obj/structure/cable,
-/obj/machinery/power/apc/alarms_hidden/south_bump,
+/obj/machinery/power/apc/alarms_hidden/south_mount,
 /turf/simulated/floor/plating,
 /area/centcom/specops/dock)
 "Zo" = (
@@ -9928,7 +9935,6 @@
 /area/centcom/specops)
 "ZN" = (
 /obj/machinery/vending/wallmed1{
-	layer = 3.3;
 	name = "Emergency NanoMed";
 	pixel_y = 30
 	},
@@ -21656,7 +21662,7 @@ nU
 pg
 nU
 nU
-nU
+OM
 qR
 nU
 nU
